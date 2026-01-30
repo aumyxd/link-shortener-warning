@@ -10,6 +10,10 @@ const links = {};
 app.use(express.json());
 app.use(express.static("public"));
 
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 // create short link
 app.post("/shorten", (req, res) => {
   const { url } = req.body;
@@ -36,3 +40,4 @@ app.get("/resolve/:code", (req, res) => {
 app.listen(PORT, () => {
   console.log("Server running");
 });
+
