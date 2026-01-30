@@ -1,5 +1,5 @@
 {
-  "name": "link-shortener",
+  "name": "link-shortener-warning",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
