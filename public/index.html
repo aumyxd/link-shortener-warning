@@ -92,22 +92,28 @@
   </main>
 
   <script>
-  const path = window.location.pathname;
-  const isShortLink = path.startsWith("/s/");
-  const code = isShortLink ? path.split("/")[2] : null;
-
   const shortener = document.getElementById("shortener");
   const warning = document.getElementById("warning");
+  const displayUrl = document.getElementById("displayUrl");
 
-  // CASE 1: Opened a short link → show warning
+  const pathParts = window.location.pathname.split("/");
+  const isShortLink = pathParts[1] === "s";
+  const code = isShortLink ? pathParts[2] : null;
+
+  // DEFAULT: show shortener
+  shortener.style.display = "block";
+  warning.style.display = "none";
+
+  // IF short link opened
   if (isShortLink && code) {
     shortener.style.display = "none";
     warning.style.display = "block";
+    displayUrl.textContent = "Loading...";
 
     fetch("/resolve/" + code)
       .then(res => res.json())
       .then(data => {
-        document.getElementById("displayUrl").textContent = data.url;
+        displayUrl.textContent = data.url;
 
         document.getElementById("continue").onclick = () => {
           window.location.href = data.url;
@@ -118,33 +124,27 @@
         };
       })
       .catch(() => {
-        document.getElementById("displayUrl").textContent =
-          "Invalid or expired link";
+        displayUrl.textContent = "Invalid or expired link";
       });
   }
 
-  // CASE 2: Normal homepage → show shortener
-  else {
-    warning.style.display = "none";
-    shortener.style.display = "block";
+  // CREATE SHORT LINK
+  document.getElementById("create").onclick = () => {
+    const url = document.getElementById("longUrl").value.trim();
+    if (!url) return;
 
-    document.getElementById("create").onclick = () => {
-      const url = document.getElementById("longUrl").value.trim();
-      if (!url) return;
-
-      fetch("/shorten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url })
-      })
-        .then(res => res.json())
-        .then(data => {
-          const shortLink =
-            window.location.origin + "/s/" + data.code;
-          document.getElementById("shortUrl").textContent = shortLink;
-        });
-    };
-  }
+    fetch("/shorten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url })
+    })
+      .then(res => res.json())
+      .then(data => {
+        const shortLink =
+          window.location.origin + "/s/" + data.code;
+        document.getElementById("shortUrl").textContent = shortLink;
+      });
+  };
 </script>
 
 </body>
