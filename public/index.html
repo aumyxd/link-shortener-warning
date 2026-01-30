@@ -1,151 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Think Before You Click</title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background-color: #f9f9f9;
-      color: #222;
-    }
-    main {
-      max-width: 420px;
-      padding: 24px;
-      text-align: center;
-      background: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    }
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 12px;
-    }
-    p {
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin-bottom: 16px;
-    }
-    .url {
-      font-weight: 600;
-      word-break: break-all;
-      margin: 12px 0 20px;
-      padding: 12px;
-      background: #f5f5f5;
-      border-radius: 6px;
-    }
-    .actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    a,
-    button {
-      font-size: 0.9rem;
-      padding: 10px 16px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      transition: opacity 0.2s;
-    }
-    a:hover,
-    button:hover {
-      opacity: 0.85;
-    }
-    .continue {
-      background-color: #111;
-      color: #fff;
-    }
-    .cancel {
-      background-color: #eaeaea;
-      color: #111;
-    }
-    .loading {
-      color: #666;
-      font-style: italic;
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>Think before you click</h1>
-    <p>
-      Shortened links can hide where they really lead.
-      Take a moment to make sure you trust the destination.
-    </p>
-    <div class="url" id="displayUrl">
-      Loading...
-    </div>
-    <p>Do you want to continue?</p>
-    <div class="actions">
-      <a href="#" class="continue" id="continueBtn">Continue</a>
-      <button class="cancel" onclick="window.close(); history.back();">Go Back</button>
-    </div>
-  </main>
+const form = document.getElementById("shortener");
+const warning = document.getElementById("warning");
+const shortUrlEl = document.getElementById("shortUrl");
+const continueLink = document.getElementById("continueLink");
 
-  <script>
-  const shortener = document.getElementById("shortener");
-  const warning = document.getElementById("warning");
-  const displayUrl = document.getElementById("displayUrl");
+// 1. Secure ID Generator using Web Crypto API
+function generateSecureId(length = 8) {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const container = new Uint32Array(length);
+  window.crypto.getRandomValues(container);
+  
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += charset[container[i] % charset.length];
+  }
+  return result;
+}
 
-  const pathParts = window.location.pathname.split("/");
-  const isShortLink = pathParts[1] === "s";
-  const code = isShortLink ? pathParts[2] : null;
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
 
-  // DEFAULT: show shortener
-  shortener.style.display = "block";
-  warning.style.display = "none";
-
-  // IF short link opened
-  if (isShortLink && code) {
-    shortener.style.display = "none";
-    warning.style.display = "block";
-    displayUrl.textContent = "Loading...";
-
-    fetch("/resolve/" + code)
-      .then(res => res.json())
-      .then(data => {
-        displayUrl.textContent = data.url;
-
-        document.getElementById("continue").onclick = () => {
-          window.location.href = data.url;
-        };
-
-        document.getElementById("cancel").onclick = () => {
-          window.location.href = "/";
-        };
-      })
-      .catch(() => {
-        displayUrl.textContent = "Invalid or expired link";
-      });
+  const rawUrl = document.getElementById("longUrl").value.trim();
+  
+  // 2. Security Check: Only allow standard web protocols
+  // This prevents 'javascript:' or 'data:' link attacks
+  if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+    alert("Please enter a valid URL starting with http:// or https://");
+    return;
   }
 
-  // CREATE SHORT LINK
-  document.getElementById("create").onclick = () => {
-    const url = document.getElementById("longUrl").value.trim();
-    if (!url) return;
+  // 3. Generate the secure link
+  const secureCode = generateSecureId(6);
+  const shortUrl = `${window.location.origin}/s/${secureCode}`;
 
-    fetch("/shorten", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url })
-    })
-      .then(res => res.json())
-      .then(data => {
-        const shortLink =
-          window.location.origin + "/s/" + data.code;
-        document.getElementById("shortUrl").textContent = shortLink;
-      });
-  };
-</script>
+  // 4. Update UI
+  shortUrlEl.textContent = shortUrl;
+  continueLink.href = rawUrl;
 
-</body>
-</html>
+  warning.style.display = "block";
+  form.style.display = "none";
+  
+  console.log(`Accountability Log: Short link ${secureCode} created for ${rawUrl}`);
+});
