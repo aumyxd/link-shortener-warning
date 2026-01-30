@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Think Before You Click</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f9f9f9;
+      color: #222;
+    }
+    main {
+      max-width: 420px;
+      padding: 24px;
+      text-align: center;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .url {
+      font-weight: 600;
+      word-break: break-all;
+      margin: 12px 0 20px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    a,
+    button {
+      font-size: 0.9rem;
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    a:hover,
+    button:hover {
+      opacity: 0.85;
+    }
+    .continue {
+      background-color: #111;
+      color: #fff;
+    }
+    .cancel {
+      background-color: #eaeaea;
+      color: #111;
+    }
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Think before you click</h1>
+    <p>
+      Shortened links can hide where they really lead.
+      Take a moment to make sure you trust the destination.
+    </p>
+    <div class="url" id="displayUrl">
+      Loading...
+    </div>
+    <p>Do you want to continue?</p>
+    <div class="actions">
+      <a href="#" class="continue" id="continueBtn">Continue</a>
+      <button class="cancel" onclick="window.close(); history.back();">Go Back</button>
+    </div>
+  </main>
+
+  <script>
+  const parts = window.location.pathname.split("/");
+  const code = parts[2];
+
+  const shortener = document.getElementById("shortener");
+  const warning = document.getElementById("warning");
+
+  if (code) {
+    fetch("/resolve/" + code)
+      .then(res => res.json())
+      .then(data => {
+        shortener.style.display = "none";
+        warning.style.display = "block";
+
+        document.getElementById("displayUrl").textContent = data.url;
+
+        document.getElementById("continue").onclick = () => {
+          window.location.href = data.url;
+        };
+
+        document.getElementById("cancel").onclick = () => {
+          window.location.href = "/";
+        };
+      });
+  } else {
+    document.getElementById("create").onclick = () => {
+      const url = document.getElementById("longUrl").value.trim();
+      if (!url) return;
+
+      fetch("/shorten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      })
+        .then(res => res.json())
+        .then(data => {
+          const shortLink =
+            window.location.origin + "/s/" + data.code;
+          document.getElementById("shortUrl").textContent = shortLink;
+        });
+    };
+  }
+</script>
+</body>
+</html>
