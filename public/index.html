@@ -1,43 +1,194 @@
-const form = document.getElementById("shortener");
-const warning = document.getElementById("warning");
-const shortUrlEl = document.getElementById("shortUrl");
-const continueLink = document.getElementById("continueLink");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Think Before You Click</title>
 
-// 1. Secure ID Generator using Web Crypto API
-function generateSecureId(length = 8) {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const container = new Uint32Array(length);
-  window.crypto.getRandomValues(container);
-  
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += charset[container[i] % charset.length];
-  }
-  return result;
-}
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f5f5f5;
+      color: #222;
+    }
 
-form.addEventListener("submit", function (e) {
-  e.preventDefault();
+    main {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      padding: 24px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
 
-  const rawUrl = document.getElementById("longUrl").value.trim();
-  
-  // 2. Security Check: Only allow standard web protocols
-  // This prevents 'javascript:' or 'data:' link attacks
-  if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
-    alert("Please enter a valid URL starting with http:// or https://");
-    return;
-  }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
 
-  // 3. Generate the secure link
-  const secureCode = generateSecureId(6);
-  const shortUrl = `${window.location.origin}/s/${secureCode}`;
+    p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
 
-  // 4. Update UI
-  shortUrlEl.textContent = shortUrl;
-  continueLink.href = rawUrl;
+    input[type="url"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
+    }
 
-  warning.style.display = "block";
-  form.style.display = "none";
-  
-  console.log(`Accountability Log: Short link ${secureCode} created for ${rawUrl}`);
-});
+    button, a {
+      font-size: 0.9rem;
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .primary {
+      background-color: #111;
+      color: #fff;
+      width: 100%;
+      display: inline-block;
+    }
+
+    .secondary {
+      background-color: #eaeaea;
+      color: #111;
+    }
+
+    .url {
+      margin-top: 14px;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    #warning {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+
+    <!-- LINK SHORTENER -->
+    <form id="shortener">
+      <h1>Think before you click</h1>
+
+      <p>
+        Paste a link to generate a shortened URL.
+        Anyone opening it will see a safety warning first.
+      </p>
+
+      <input
+        type="url"
+        id="longUrl"
+        placeholder="https://example.com"
+        required
+      />
+
+      <button type="submit" class="primary">
+        Create short link
+      </button>
+
+      <div id="shortUrl" class="url"></div>
+    </form>
+
+    <!-- WARNING PAGE -->
+    <section id="warning">
+      <h1>Think before you click</h1>
+
+      <p>
+        Shortened links can hide their true destination.
+        Only continue if you trust where this link leads.
+      </p>
+
+      <p>Do you want to continue?</p>
+
+      <div class="actions">
+        <a id="continueLink" class="primary">Continue</a>
+        <button class="secondary" onclick="window.location.href='/'">
+          Go Back
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SCRIPT (CORRECT ORDER, CORRECT FORMAT) -->
+  <script>
+    const form = document.getElementById("shortener");
+    const warning = document.getElementById("warning");
+    const shortUrlEl = document.getElementById("shortUrl");
+    const continueLink = document.getElementById("continueLink");
+
+    // Secure ID Generator using Web Crypto API
+    function generateSecureId(length = 8) {
+      const charset =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      const container = new Uint32Array(length);
+      window.crypto.getRandomValues(container);
+
+      let result = "";
+      for (let i = 0; i < length; i++) {
+        result += charset[container[i] % charset.length];
+      }
+      return result;
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const rawUrl = document
+        .getElementById("longUrl")
+        .value
+        .trim();
+
+      // Allow only http/https URLs
+      if (
+        !rawUrl.startsWith("http://") &&
+        !rawUrl.startsWith("https://")
+      ) {
+        alert(
+          "Please enter a valid URL starting with http:// or https://"
+        );
+        return;
+      }
+
+      const secureCode = generateSecureId(6);
+      const shortUrl =
+        window.location.origin + "/s/" + secureCode;
+
+      shortUrlEl.textContent = shortUrl;
+      continueLink.href = rawUrl;
+
+      form.style.display = "none";
+      warning.style.display = "block";
+
+      console.log(
+        `Accountability Log: Short link ${secureCode} created for ${rawUrl}`
+      );
+    });
+  </script>
+</body>
+</html>
