@@ -4,12 +4,12 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// temporary storage (prototype)
+// in-memory storage (prototype)
 const links = {};
 
 app.use(express.json());
-app.use(express.static("public"));
 
+// serve homepage
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -22,10 +22,10 @@ app.post("/shorten", (req, res) => {
   res.json({ code });
 });
 
-// open short link → warning page
+// serve warning page for short link
 app.get("/s/:code", (req, res) => {
   if (!links[req.params.code]) {
-    return res.send("Invalid link");
+    return res.send("This link is invalid or expired.");
   }
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -33,11 +33,12 @@ app.get("/s/:code", (req, res) => {
 // resolve original url
 app.get("/resolve/:code", (req, res) => {
   const url = links[req.params.code];
-  if (!url) return res.status(404).json({ error: "Not found" });
+  if (!url) {
+    return res.status(404).json({ error: "Not found" });
+  }
   res.json({ url });
 });
 
 app.listen(PORT, () => {
-  console.log("Server running");
+  console.log("Server running on port", PORT);
 });
-
