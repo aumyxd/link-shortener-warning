@@ -92,19 +92,21 @@
   </main>
 
   <script>
-  const parts = window.location.pathname.split("/");
-  const code = parts[2];
+  const path = window.location.pathname;
+  const isShortLink = path.startsWith("/s/");
+  const code = isShortLink ? path.split("/")[2] : null;
 
   const shortener = document.getElementById("shortener");
   const warning = document.getElementById("warning");
 
-  if (code) {
+  // CASE 1: Opened a short link → show warning
+  if (isShortLink && code) {
+    shortener.style.display = "none";
+    warning.style.display = "block";
+
     fetch("/resolve/" + code)
       .then(res => res.json())
       .then(data => {
-        shortener.style.display = "none";
-        warning.style.display = "block";
-
         document.getElementById("displayUrl").textContent = data.url;
 
         document.getElementById("continue").onclick = () => {
@@ -114,8 +116,18 @@
         document.getElementById("cancel").onclick = () => {
           window.location.href = "/";
         };
+      })
+      .catch(() => {
+        document.getElementById("displayUrl").textContent =
+          "Invalid or expired link";
       });
-  } else {
+  }
+
+  // CASE 2: Normal homepage → show shortener
+  else {
+    warning.style.display = "none";
+    shortener.style.display = "block";
+
     document.getElementById("create").onclick = () => {
       const url = document.getElementById("longUrl").value.trim();
       if (!url) return;
@@ -134,5 +146,6 @@
     };
   }
 </script>
+
 </body>
 </html>
